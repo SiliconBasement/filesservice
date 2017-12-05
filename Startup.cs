@@ -6,8 +6,12 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
-namespace filesservice
+using ru.siliconbasement.micros.filesservice.storage;
+
+namespace ru.siliconbasement.micros.filesservice
 {
     public class Startup
     {
@@ -22,6 +26,9 @@ namespace filesservice
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddMvc();
+
+            // Add application services.
+            services.AddTransient<IDataStorage, LocalFileSystemStorage>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -30,20 +37,18 @@ namespace filesservice
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
+                app.UseDatabaseErrorPage();
+                app.UseBrowserLink();
             }
-            else
-            {
-                app.UseExceptionHandler("/Error");
-            }
+            // else
+            // {
+            //     // TODO: Replace with API error handler
+            //     app.UseExceptionHandler("/Home/Error");
+            // }
 
-            app.UseStaticFiles();
+            // app.UseStaticFiles();
 
-            app.UseMvc(routes =>
-            {
-                routes.MapRoute(
-                    name: "default",
-                    template: "{controller}/{action=Index}/{id?}");
-            });
+            app.UseMvc();
         }
     }
 }
