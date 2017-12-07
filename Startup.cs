@@ -26,6 +26,16 @@ namespace ru.siliconbasement.micros.filesservice
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddMvc();
+            
+            // Add configuration as DI service
+            services.Add(new ServiceDescriptor(typeof(IConfiguration), 
+                     provider => new ConfigurationBuilder()
+                                    .SetBasePath(System.IO.Directory.GetCurrentDirectory())
+                                    .AddJsonFile("appsettings.json", 
+                                                 optional: false, 
+                                                 reloadOnChange: true)
+                                    .Build(), 
+                     ServiceLifetime.Singleton));
 
             // Add application services.
             services.AddTransient<IDataStorage, LocalFileSystemStorage>();
@@ -40,13 +50,6 @@ namespace ru.siliconbasement.micros.filesservice
                 app.UseDatabaseErrorPage();
                 app.UseBrowserLink();
             }
-            // else
-            // {
-            //     // TODO: Replace with API error handler
-            //     app.UseExceptionHandler("/Home/Error");
-            // }
-
-            // app.UseStaticFiles();
 
             app.UseMvc();
         }

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 
 using ru.siliconbasement.micros.filesservice.storage;
 
@@ -8,11 +9,12 @@ namespace ru.siliconbasement.micros.filesservice.controllers {
     [Route("api/[controller]")]
     public class FilesController : Controller
     {
-
+        private readonly ILogger _logger;
         private readonly IDataStorage _storage;
 
-        public FilesController(IDataStorage storage)
+        public FilesController(IDataStorage storage, ILogger<FilesController> logger)
         {
+            _logger = logger;
             _storage = storage;
         }       
 
@@ -20,6 +22,7 @@ namespace ru.siliconbasement.micros.filesservice.controllers {
         [HttpGet]
         public IEnumerable<object> Get()
         {
+            _logger.LogDebug("GET /api/files");
             return _storage.LoadAll();
         }
 
@@ -27,9 +30,11 @@ namespace ru.siliconbasement.micros.filesservice.controllers {
         [HttpGet("{uid}", Name = "GetFile")]
         public IActionResult Get(Guid uid)
         {
+            _logger.LogDebug("GET /api/files/{uid}", uid);
             var item = _storage.Load(uid);
             if (item == null)
             {
+                _logger.LogWarning("File not found. uid: {uid}", uid);
                 return NotFound();
             }
             return new ObjectResult(item);
