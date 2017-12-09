@@ -1,5 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
@@ -9,27 +12,51 @@ namespace ru.siliconbasement.micros.filesservice.storage {
         private readonly ILogger _logger;
         private readonly string _storagePath;
 
+        // Path inside _storagePath where regular files to be stored
+        const string FILES_PATH = "files";
+        // Path inside _storagePath where preloaded temp files to be stored
+        const string TEMP_PATH = "temp";
+
+        // Path inside _storagePath where preloaded trashed files to be stored
+        const string TRASH_PATH = "trash";
+
         public LocalFileSystemStorage(IConfiguration configuration, ILogger<LocalFileSystemStorage> logger) {
             _configuration = configuration;
             _logger = logger;
             _storagePath = configuration.GetValue<string>("Storage:Path", "./storage");
             _logger.LogDebug("Storage.Path: {_storagePath}", _storagePath);
         }
-        public Guid Save(string filePath) {
+
+        public async Task<Guid> SaveAsync(IFormFile file) {
             Guid uid = new Guid();
-            System.IO.Directory.CreateDirectory(System.IO.Path.Combine(_storagePath, uid.ToString()));
+            var di = System.IO.Directory.CreateDirectory(System.IO.Path.Combine(_storagePath, FILES_PATH, uid.ToString()));
+            // TODO: Validate file.FileName before use it as FileSystem name
+            var filePath = System.IO.Path.Combine(di.FullName, file.FileName);
+            using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                await file.CopyToAsync(stream);
+            }
+
             return uid;
         }
-        public object Load(Guid uid) {
-            var result = new object();
-            return result;
+
+        public async Task<Guid> SaveTempAsync(IFormFile file) {
+            Guid uid = new Guid();
+            var di = System.IO.Directory.CreateDirectory(System.IO.Path.Combine(_storagePath, TEMP_PATH, uid.ToString()));
+            // TODO: Validate file.FileName before use it as FileSystem name
+            var filePath = System.IO.Path.Combine(di.FullName, file.FileName);
+            using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                await file.CopyToAsync(stream);
+            }
+
+            return uid;
         }
 
-        public IEnumerable<object> LoadAll()
-        {
-            List<object> results = new List<object>();
+        public async Task<object> GitFileInfoAsync(Guid uid) {
+            var result = new object();
 
-            return results;
+            return await Task.FromResult<object>(result);
         }
 
         public void Delete(Guid uid) {
